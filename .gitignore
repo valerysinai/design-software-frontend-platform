@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Este paquete se distribuye como codigo TypeScript: "types" y "exports" apuntan a
+# ./src/index.ts. Los .d.ts son un efecto colateral de que otro repo consuma estas
+# fuentes por ruta y ejecute `vite build`: se generan aqui y nadie los lee.
+*.d.ts
+
+.env
+.env.local
+.env.*.local
