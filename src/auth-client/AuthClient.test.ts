@@ -17,11 +17,42 @@ const jsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 describe('AuthClient', () => {
+  it('usa el token del login para consultar la identidad real y no fabrica permisos', async () => {
+    let token: string | null = null;
+    const client = new AuthClient({
+      baseUrl: '/api/v1',
+      tokenProvider: { getAccessToken: () => token, setAccessToken: (value) => { token = value; }, clear: () => { token = null; } },
+      fetchImpl: async (path, init) => {
+        if (path.endsWith('/login')) {
+          expect(new Headers(init?.headers).has('Authorization')).toBe(false);
+          return jsonResponse(200, { access_token: 'issued-by-iam' });
+        }
+        expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer issued-by-iam');
+        return jsonResponse(200, mePayload);
+      },
+    });
+    expect(await client.login('user@example.test', 'test-password')).toEqual(mePayload);
+    expect(client.hasSession).toBe(true);
+  });
+
+  it('descarta el token si IAM rechaza la consulta de identidad después del login', async () => {
+    let token: string | null = null;
+    const client = new AuthClient({
+      baseUrl: '/api/v1',
+      tokenProvider: { getAccessToken: () => token, setAccessToken: (value) => { token = value; }, clear: () => { token = null; } },
+      fetchImpl: async (path) => path.endsWith('/login')
+        ? jsonResponse(200, { access_token: 'unusable' })
+        : jsonResponse(403, { message: 'Denied', error_code: 'FORBIDDEN' }),
+    });
+    await expect(client.login('user@example.test', 'test-password')).rejects.toBeInstanceOf(HttpError);
+    expect(client.hasSession).toBe(false);
+  });
   it('expone el usuario autenticado y sus módulos', async () => {
     const calls: string[] = [];
     const client = new AuthClient({
       baseUrl: '/api/v1',
-      fetchImpl: async (input) => {
+      fetchImpl: async (input, init) => {
+        expect(new Headers(init?.headers).has('Authorization')).toBe(false);
         calls.push(input);
         return jsonResponse(200, mePayload);
       },

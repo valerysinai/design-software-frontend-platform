@@ -31,6 +31,7 @@ export interface SessionListener {
 
 export interface TokenProvider {
   getAccessToken(): string | null;
+  setAccessToken?(token: string): void;
   clear(): void;
 }
 
@@ -85,7 +86,7 @@ export class HttpClient {
       headers.set('Content-Type', 'application/json');
     }
     const token = this.tokenProvider?.getAccessToken();
-    if (token !== null) headers.set('Authorization', `Bearer ${token}`);
+    if (token != null) headers.set('Authorization', `Bearer ${token}`);
 
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
       ...init,

@@ -149,6 +149,8 @@ export interface TrainingEnvironmentMfeProps extends BaseMfeProps {
 
 export interface ReferenceDataMfeProps extends BaseMfeProps {
   permissions?: readonly string[];
+  /** Host-owned current IAM token; the remote does not persist credentials. */
+  getAccessToken?: () => string | null;
 }
 
 // ---------------------------------------------------------------------------
