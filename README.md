@@ -1,5 +1,11 @@
 # design-software-frontend-platform
 
+## Integración real de sesión (HU-REF-020)
+
+`AuthClient.login(email, password)` usa el contrato existente de IAM, entrega el access token al `TokenProvider.setAccessToken` del host y consulta `/auth/me` para resolver la identidad y sus permisos reales. El setter es opcional para consumidores anteriores, pero obligatorio si se invoca login. El cliente limpia la sesión si falla la consulta de identidad y al salir, incluso ante un error remoto.
+
+No se persisten contraseñas ni refresh tokens. La implementación de almacenamiento pertenece al shell. El contrato de `ReferenceDataMfeProps` permite pasar un getter del token actual sin acoplar el remote al almacenamiento. Esta entrega no incorpora renovación automática de tokens. El ADR compartido está en `docs/adr/ADR-HU-REF-020-real-frontend-integration.md` de web-shell; las pruebas integradas están en `validation/frontend-reference` de docker-infra.
+
 Fachada transversal para los repos de frontend. Es el único lugar permitido para `fetch`, `localStorage`, configuración de ambientes y comunicación entre MFEs.
 
 ## Responsabilidades

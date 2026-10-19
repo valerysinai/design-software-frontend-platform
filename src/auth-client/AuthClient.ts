@@ -29,6 +29,20 @@ export class AuthClient {
     return this.currentUser;
   }
 
+  async login(email: string, password: string): Promise<Me> {
+    if (!this.tokenProvider?.setAccessToken) {
+      throw new Error('A writable token provider is required to sign in.');
+    }
+    const result = await this.http.post<components['schemas']['TokenResponse']>('/auth/login', { email, password });
+    this.tokenProvider.setAccessToken(result.access_token);
+    try {
+      return await this.getMe();
+    } catch (error) {
+      this.clearSession();
+      throw error;
+    }
+  }
+
   async getMe(): Promise<Me> {
     const me = await this.http.get<Me>('/auth/me');
     this.currentUser = me;
